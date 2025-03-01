@@ -1,10 +1,10 @@
+// DiscordOocColorSystem.cs
 using Content.Server.DiscordAuth.Database;
 using Content.Shared.CCVar;
-using Content.Shared.Chat;        // Для OOCMessageEvent
-using Robust.Server.Player;       // Для IPlayerSession
+using Content.Shared.Chat;
+using Robust.Server.Player;
 using Robust.Shared.Configuration;
 using Robust.Shared.Player;
-using Robust.Server;
 
 namespace Content.Server.DiscordAuth.Systems
 {
@@ -27,7 +27,17 @@ namespace Content.Server.DiscordAuth.Systems
 
         private void ApplyDiscordColor(ICommonSession player, ref string message)
         {
-            // Логика изменения цвета
+            // Логика изменения цвета OOC
+            if (player.AttachedEntity is null) return;
+
+            var userId = player.UserId;
+            var token = _db.Tokens.FirstOrDefault(t => t.UserId == userId);
+
+            if (token?.DiscordRoles != null &&
+                token.DiscordRoles.Contains(_cfg.GetCVar(CCVars.DiscordAuthRoleId)))
+            {
+                message = $"[color={_cfg.GetCVar(CCVars.DiscordRoleOocColor)}]{message}[/color]";
+            }
         }
     }
 }

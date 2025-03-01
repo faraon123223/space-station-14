@@ -1,13 +1,13 @@
 using Content.Server.DiscordAuth.Database;
 using Content.Shared.CCVar;
-using Robust.Server.GameObjects; // Для PlayerAttachedEvent
-using Robust.Server.Player;      // Для IPlayerSession
+using Content.Shared.Chat;
 using Robust.Shared.Configuration;
-using Robust.Server;
+using Robust.Shared.Player;
+using Robust.Server.Player;
 
 namespace Content.Server.DiscordAuth.Systems
 {
-    public sealed class DiscordAuthSystem : EntitySystem
+    public sealed class DiscordOocColorSystem : EntitySystem
     {
         [Dependency] private readonly IConfigurationManager _cfg = default!;
         [Dependency] private readonly DiscordAuthDbContext _db = default!;
@@ -15,23 +15,18 @@ namespace Content.Server.DiscordAuth.Systems
 
         public override void Initialize()
         {
-            SubscribeLocalEvent<PlayerAttachedEvent>(OnPlayerAttached);
+            SubscribeNetworkEvent<OOCMessageEvent>(OnOocMessage);
         }
 
-        private void OnPlayerAttached(PlayerAttachedEvent args)
+        private void OnOocMessage(OOCMessageEvent ev, EntitySessionEventArgs args)
         {
-            if (!_cfg.GetCVar(CCVars.DiscordAuthEnabled)) return;
-
-            var player = args.Player;
-            if (!_db.IsUserAuthorized(player.UserId))
-                ShowAuthWindow(player);
+            var player = _playerManager.GetSessionByUserId(args.SenderSession.UserId);
+            ApplyDiscordColor(player, ref ev.Message);
         }
 
-        private void ShowAuthWindow(IPlayerSession session)
+        private void ApplyDiscordColor(ICommonSession player, ref string message)
         {
-            var token = Guid.NewGuid().ToString("N");
-            _db.StoreAuthToken(session.UserId, token);
-            // Дополнительная логика отправки сообщения игроку
+            // Логика изменения цвета OOC
         }
     }
 }
